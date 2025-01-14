@@ -31,12 +31,23 @@ export const validateApiKey = async (req: Request) => {
 export const redirectToPage = (
   req: Request,
   pathname: string,
-  isAuthed: boolean
+  isAuthed: boolean,
+  isTwoFactorAuthed: boolean
 ) => {
   if (pathname === "/sign-in") {
-    return isAuthed
-      ? NextResponse.redirect(new URL("/dashboard", req.url))
-      : null;
+    if (isAuthed) {
+      return isTwoFactorAuthed
+        ? NextResponse.redirect(new URL("/dashboard", req.url))
+        : NextResponse.redirect(new URL("/2fa", req.url));
+    }
+  }
+
+  if (pathname === "/2fa" && !isAuthed) {
+    return NextResponse.redirect(new URL("/sign-in", req.url));
+  }
+
+  if (pathname === "/2fa" && isAuthed && isTwoFactorAuthed) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   return null;

@@ -3,6 +3,8 @@ import { OTP_EMAIL_SUBJECT } from "@/lib/constants";
 import { generateOTP } from "@/lib/server-utils";
 import { Resend } from "resend";
 
+export const runtime = "nodejs";
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 const from_email = process.env.RESEND_FROM_EMAIL;
 

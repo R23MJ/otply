@@ -111,26 +111,6 @@ export async function generateAPIKey() {
   return apiKey;
 }
 
-export async function getUser(username: string, password: string) {
-  const user = await prisma.user.findUnique({
-    where: {
-      email: username,
-    },
-  });
-
-  if (!user) {
-    return null;
-  }
-
-  const isMatch = await bcrypt.compare(password, user.password);
-
-  if (isMatch) {
-    return user;
-  }
-
-  return null;
-}
-
 export async function verifyAPIKey(apiKey: string, userId: string) {
   const keys = await prisma.aPIKey.findMany({
     where: {
