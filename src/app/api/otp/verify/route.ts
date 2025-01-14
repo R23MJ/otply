@@ -1,5 +1,7 @@
 import { verifyOTP } from "@/lib/server-utils";
 
+export const runtime = "nodejs";
+
 export async function POST(req: Request) {
   const data = await req.json();
   const { otp, email } = data;
