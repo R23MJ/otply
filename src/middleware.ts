@@ -1,10 +1,8 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-import { PROTECTED_ROUTES } from "./lib/constants";
-import { headers } from "next/headers";
 
-const handleOtpRequest = async (req: Request) => {
-  const authHeader = (await headers()).get("Authorization");
+const validateApiKey = async (req: Request) => {
+  const authHeader = req.headers.get("Authorization");
   if (!authHeader)
     return new Response(
       JSON.stringify({ error: "Authorization header missing" }),
@@ -31,26 +29,26 @@ const handleOtpRequest = async (req: Request) => {
       });
 };
 
-const handleRedirect = (
+const redirectToPage = (
   req: Request,
   pathname: string,
   isAuthed: boolean,
   isTwoFactorAuthed: boolean
 ) => {
   if (pathname === "/sign-in") {
-    return isAuthed
-      ? isTwoFactorAuthed
+    if (isAuthed) {
+      return isTwoFactorAuthed
         ? NextResponse.redirect(new URL("/dashboard", req.url))
-        : NextResponse.redirect(new URL("/2fa", req.url))
-      : null;
+        : NextResponse.redirect(new URL("/2fa", req.url));
+    }
   }
 
-  if (pathname === "/2fa") {
-    return isAuthed
-      ? isTwoFactorAuthed
-        ? NextResponse.redirect(new URL("/dashboard", req.url))
-        : null
-      : NextResponse.redirect(new URL("/sign-in", req.url));
+  if (pathname === "/2fa" && !isAuthed) {
+    return NextResponse.redirect(new URL("/sign-in", req.url));
+  }
+
+  if (pathname === "/2fa" && isAuthed && isTwoFactorAuthed) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   return null;
@@ -60,15 +58,13 @@ export default auth(async (req) => {
   const { pathname } = req.nextUrl;
   const isAuthed = !!req.auth;
   const isTwoFactorAuthed = !!req.auth?.twoFactorAuthed;
-  const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
-    pathname.startsWith(route)
-  );
+  const isProtectedRoute = pathname.includes("/dashboard");
 
   if (pathname.includes("/api/otp") || pathname.includes("/api/totp")) {
-    return handleOtpRequest(req);
+    return validateApiKey(req);
   }
 
-  const redirectResponse = handleRedirect(
+  const redirectResponse = redirectToPage(
     req,
     pathname,
     isAuthed,
