@@ -3,78 +3,78 @@ import { NextResponse } from "next/server";
 import { PROTECTED_ROUTES } from "./lib/constants";
 import { headers } from "next/headers";
 
-export default auth(async (req) => {
-  const isAuthed = !!req.auth;
-  const isTwoFactorAuthed = !!req.auth?.twoFactorAuthed;
+const handleOtpRequest = async (req: Request) => {
+  const authHeader = (await headers()).get("Authorization");
+  if (!authHeader)
+    return new Response(
+      JSON.stringify({ error: "Authorization header missing" }),
+      { status: 401 }
+    );
 
-  const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
-    req.nextUrl.pathname.startsWith(route)
-  );
-
-  if (
-    req.nextUrl.pathname.includes("/api/otp") ||
-    req.nextUrl.pathname.includes("/api/totp")
-  ) {
-    const headersList = await headers();
-    const auth_header = headersList.get("Authorization");
-
-    if (!auth_header) {
-      return new Response(
-        JSON.stringify({ error: "Authorization header missing" }),
-        {
-          status: 401,
-        }
-      );
-    }
-
-    const otply_api_key = auth_header.split(" ")[1];
-
-    if (!otply_api_key) {
-      return new Response(JSON.stringify({ error: "API key missing" }), {
-        status: 401,
-      });
-    }
-
-    const data = await req.json();
-    const { clientId } = data;
-
-    const keyIsValid = await fetch(process.env.OTPLY_KEY_VERIFY_URL || "", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        clientId: clientId,
-        key: otply_api_key,
-      }),
+  const otplyApiKey = authHeader.split(" ")[1];
+  if (!otplyApiKey)
+    return new Response(JSON.stringify({ error: "API key missing" }), {
+      status: 401,
     });
 
-    if (!keyIsValid) {
-      return new Response(JSON.stringify({ error: "Invalid API key" }), {
+  const { clientId } = await req.json();
+  const keyIsValid = await fetch(`${process.env.OTPLY_KEY_VERIFY_URL}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ clientId, key: otplyApiKey }),
+  });
+
+  return keyIsValid
+    ? NextResponse.next()
+    : new Response(JSON.stringify({ error: "Invalid API key" }), {
         status: 401,
       });
-    }
+};
 
-    return NextResponse.next();
+const handleRedirect = (
+  req: Request,
+  pathname: string,
+  isAuthed: boolean,
+  isTwoFactorAuthed: boolean
+) => {
+  if (pathname === "/sign-in") {
+    return isAuthed
+      ? isTwoFactorAuthed
+        ? NextResponse.redirect(new URL("/dashboard", req.url))
+        : NextResponse.redirect(new URL("/2fa", req.url))
+      : null;
   }
 
-  if (req.nextUrl.pathname == "/sign-in") {
-    if (isAuthed && isTwoFactorAuthed) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
-    if (isAuthed && !isTwoFactorAuthed) {
-      return NextResponse.redirect(new URL("/2fa", req.url));
-    }
+  if (pathname === "/2fa") {
+    return isAuthed
+      ? isTwoFactorAuthed
+        ? NextResponse.redirect(new URL("/dashboard", req.url))
+        : null
+      : NextResponse.redirect(new URL("/sign-in", req.url));
   }
 
-  if (req.nextUrl.pathname == "/2fa") {
-    if (isAuthed && isTwoFactorAuthed) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
-    if (!isAuthed) {
-      return NextResponse.redirect(new URL("/sign-in", req.url));
-    }
+  return null;
+};
+
+export default auth(async (req) => {
+  const { pathname } = req.nextUrl;
+  const isAuthed = !!req.auth;
+  const isTwoFactorAuthed = !!req.auth?.twoFactorAuthed;
+  const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  if (pathname.includes("/api/otp") || pathname.includes("/api/totp")) {
+    return handleOtpRequest(req);
   }
+
+  const redirectResponse = handleRedirect(
+    req,
+    pathname,
+    isAuthed,
+    isTwoFactorAuthed
+  );
+  if (redirectResponse) return redirectResponse;
 
   if (isProtectedRoute && !isAuthed) {
     return NextResponse.redirect(new URL("/sign-in", req.url));
