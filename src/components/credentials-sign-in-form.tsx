@@ -1,6 +1,5 @@
 "use client";
 
-import { CredentialsSignIn } from "@/lib/sign-in-actions";
 import {
   Form,
   FormControl,
@@ -15,6 +14,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
+import { signIn } from "next-auth/react";
 
 export function CredentialsSignInForm() {
   const form = useForm<z.infer<typeof CredentialsSchema>>({
@@ -25,11 +25,31 @@ export function CredentialsSignInForm() {
     },
   });
 
+  const handleSubmit = form.handleSubmit(async (formData) => {
+    const response = await signIn("credentials", {
+      username: formData.Username as string,
+      password: formData.Password as string,
+      redirect: true,
+      redirectTo: "/sign-in",
+    });
+
+    if (response?.error) {
+      form.setError("Username", {
+        type: "manual",
+        message: "Invalid credentials",
+      });
+      form.setError("Password", {
+        type: "manual",
+        message: "Invalid credentials",
+      });
+    }
+  });
+
   return (
     <Form {...form}>
       <form
         className="w-full flex flex-col justify-center gap-2"
-        action={CredentialsSignIn}
+        onSubmit={handleSubmit}
       >
         {Object.keys(CredentialsSchema.shape).map((key) => (
           <FormField
