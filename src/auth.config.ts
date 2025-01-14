@@ -1,15 +1,5 @@
 import { NextAuthConfig } from "next-auth";
 
-declare module "next-auth" {
-  interface User {
-    twoFactorEnabled?: boolean;
-  }
-
-  interface Session {
-    twoFactorAuthed?: boolean;
-  }
-}
-
 export const authConfig = {
   session: {
     strategy: "jwt",

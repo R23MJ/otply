@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
 import { authConfig } from "./auth.config";
 import { getUser } from "./lib/server-utils";
 
@@ -30,6 +29,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return null;
       },
     }),
-    Google,
   ],
 });

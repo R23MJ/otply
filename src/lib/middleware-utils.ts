@@ -32,7 +32,6 @@ export const redirectToPage = (
   req: Request,
   pathname: string,
   isAuthed: boolean
-  // isTwoFactorAuthed: boolean
 ) => {
   if (pathname === "/sign-in") {
     return isAuthed
