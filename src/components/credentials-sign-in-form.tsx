@@ -29,8 +29,7 @@ export function CredentialsSignInForm() {
     const response = await signIn("credentials", {
       username: formData.Username as string,
       password: formData.Password as string,
-      redirect: true,
-      redirectTo: "/sign-in",
+      redirect: false,
     });
 
     if (response?.error) {
