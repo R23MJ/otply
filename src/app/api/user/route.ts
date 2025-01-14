@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma-client-inst";
-import { NextApiRequest } from "next";
+import { NextRequest } from "next/server";
 
-export async function GET(req: NextApiRequest) {
-  const { email } = req.query;
+export async function GET(req: NextRequest) {
+  const email = req.nextUrl.searchParams.get("email");
 
   if (!email) {
     return new Response("Email is required", {
