@@ -1,24 +1,26 @@
 import { prisma } from "@/lib/prisma-client-inst";
+import { NextApiRequest } from "next";
 
-export async function POST(req: Request) {
-  const origin = req.headers.get("origin") || req.headers.get("referer");
+export async function GET(req: NextApiRequest) {
+  const { email } = req.query;
 
-  console.log("origin", origin);
-
-  if (origin?.includes(`${process.env.OTPLY_URL}`)) {
-    return new Response(JSON.stringify({ error: "Forbidden" }), {
-      status: 403,
+  if (!email) {
+    return new Response("Email is required", {
+      status: 400,
     });
   }
 
-  const data = await req.json();
-  const { username } = data;
-
   const user = await prisma.user.findUnique({
     where: {
-      email: username,
+      email: email as string,
     },
   });
+
+  if (!user) {
+    return new Response("User not found", {
+      status: 404,
+    });
+  }
 
   return new Response(JSON.stringify(user), {
     status: 200,

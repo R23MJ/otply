@@ -5,13 +5,7 @@ import { authConfig } from "./auth.config";
 import bcrypt from "bcryptjs";
 
 export async function getUser(username: string, password: string) {
-  const res = await fetch(`${process.env.OTPLY_URL}/api/user`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ username }),
-  });
+  const res = await fetch(`${process.env.OTPLY_URL}/api/user/${username}`);
 
   if (!res.ok) {
     return null;

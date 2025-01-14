@@ -3,14 +3,6 @@ import { verifyAPIKey } from "@/lib/server-utils";
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  const origin = req.headers.get("origin") || req.headers.get("referer");
-
-  if (origin !== process.env.OTPLY_URL) {
-    return new Response(JSON.stringify({ error: "Forbidden" }), {
-      status: 403,
-    });
-  }
-
   const data = await req.json();
   const { clientId, key } = data;
 
