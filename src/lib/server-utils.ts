@@ -41,6 +41,8 @@ export async function generateOTP(email: string) {
         expiresAt: expiresAt,
       },
     });
+
+    return otp;
   }
 
   await prisma.oTPCode.create({
