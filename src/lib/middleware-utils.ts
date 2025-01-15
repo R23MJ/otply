@@ -1,18 +1,24 @@
 import { NextResponse } from "next/server";
+import { Redis } from "@upstash/redis";
+import { Ratelimit } from "@upstash/ratelimit";
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
+
+const ratelimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "30 m"),
+});
 
 export const validateApiKey = async (req: Request) => {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader)
-    return new Response(
-      JSON.stringify({ error: "Authorization header missing" }),
-      { status: 401 }
-    );
+    return new Response("Authorization header missing", { status: 401 });
 
   const otplyApiKey = authHeader.split(" ")[1];
-  if (!otplyApiKey)
-    return new Response(JSON.stringify({ error: "API key missing" }), {
-      status: 401,
-    });
+  if (!otplyApiKey) return new Response("API key missing", { status: 401 });
 
   const { clientId } = await req.json();
   const keyIsValid = await fetch(`${process.env.OTPLY_KEY_VERIFY_URL}`, {
@@ -23,9 +29,7 @@ export const validateApiKey = async (req: Request) => {
 
   return keyIsValid
     ? NextResponse.next()
-    : new Response(JSON.stringify({ error: "Invalid API key" }), {
-        status: 401,
-      });
+    : new Response("Invalid API key", { status: 401 });
 };
 
 export const redirectToPage = (
@@ -34,12 +38,10 @@ export const redirectToPage = (
   isAuthed: boolean,
   isTwoFactorAuthed: boolean
 ) => {
-  if (pathname === "/sign-in") {
-    if (isAuthed) {
-      return isTwoFactorAuthed
-        ? NextResponse.redirect(new URL("/dashboard", req.url))
-        : NextResponse.redirect(new URL("/2fa", req.url));
-    }
+  if (pathname === "/sign-in" && isAuthed) {
+    return isTwoFactorAuthed
+      ? NextResponse.redirect(new URL("/dashboard", req.url))
+      : NextResponse.redirect(new URL("/2fa", req.url));
   }
 
   if (pathname === "/2fa" && !isAuthed) {
@@ -51,4 +53,26 @@ export const redirectToPage = (
   }
 
   return null;
+};
+
+export const handleRateLimiting = async (req: Request) => {
+  const clientId = req.headers.get("x-client-id");
+  if (!clientId)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const response = await fetch(
+    `${process.env.OTPLY_URL}/api/user/?clientId=${clientId}`
+  );
+  if (!response.ok)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { success, limit, reset } = await ratelimiter.limit(
+    `ratelimit_${clientId}`
+  );
+  if (!success) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded", limit, reset, remaining: 0 },
+      { status: 429 }
+    );
+  }
 };

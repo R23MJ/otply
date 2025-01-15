@@ -12,6 +12,12 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 }
 
+enum PLAN {
+  FREE
+  STANDARD
+  PRO
+}
+
 model OTPCode {
   id        String   @id @default(cuid())
   code      String
@@ -28,6 +34,7 @@ model User {
   email            String   @unique
   password         String
   twoFactorEnabled Boolean  @default(false)
+  plan             PLAN     @default(FREE)
   apiKeys          APIKey[]
 }
 

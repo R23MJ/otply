@@ -3,18 +3,24 @@ import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
   const email = req.nextUrl.searchParams.get("email");
+  const clientId = req.nextUrl.searchParams.get("clientId");
 
-  if (!email) {
-    return new Response("Email is required", {
+  if (!email && !clientId) {
+    return new Response("Email or clientId is required", {
       status: 400,
     });
   }
 
-  const user = await prisma.user.findUnique({
-    where: {
-      email: email as string,
-    },
-  });
+  let user;
+  if (email) {
+    user = await prisma.user.findUnique({
+      where: { email: email as string },
+    });
+  } else if (clientId) {
+    user = await prisma.user.findUnique({
+      where: { id: clientId as string },
+    });
+  }
 
   if (!user) {
     return new Response("User not found", {
