@@ -15,6 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { signIn } from "next-auth/react";
+import { redirect } from "next/navigation";
 
 export function CredentialsSignInForm() {
   const form = useForm<z.infer<typeof CredentialsSchema>>({
@@ -31,6 +32,10 @@ export function CredentialsSignInForm() {
       password: formData.Password as string,
       redirect: false,
     });
+
+    if (response?.ok) {
+      redirect("/dashboard");
+    }
 
     if (response?.error) {
       form.setError("Username", {

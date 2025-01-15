@@ -9,7 +9,6 @@ export async function getUser(username: string, password: string) {
     `${process.env.OTPLY_URL}/api/user/?email=${username}`
   );
 
-  console.log(res);
   if (!res.ok) {
     return null;
   }
