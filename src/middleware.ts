@@ -25,6 +25,10 @@ export default auth(async (req) => {
     return await handleRateLimiting(req);
   }
 
+  if (pathname.startsWith("/api/auth")) {
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith("/api")) {
     return validateApiKey(req);
   }
