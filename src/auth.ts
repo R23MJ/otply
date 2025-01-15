@@ -6,8 +6,18 @@ import bcrypt from "bcryptjs";
 
 export async function getUser(username: string, password: string) {
   const res = await fetch(
-    `${process.env.OTPLY_URL}/api/user/?email=${username}`
+    `${process.env.OTPLY_URL}/api/user/?email=${username}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OTPLY_API_KEY}`,
+        "x-client-id": process.env.OTPLY_CLIENT_ID!,
+      },
+    }
   );
+
+  console.log("res", res);
 
   if (!res.ok) {
     return null;
@@ -39,6 +49,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           credentials.password as string
         );
 
+        console.log(user);
         if (user) {
           return {
             id: user.id.toString(),

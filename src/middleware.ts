@@ -14,6 +14,7 @@ const EXCLUDED_ROUTES = [
   "/_next/image",
   "/favicon.ico",
   "/api/auth",
+  "/api/user",
 ];
 
 export const config = {
