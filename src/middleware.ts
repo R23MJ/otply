@@ -9,10 +9,17 @@ import {
 const PROTECTED_ROUTES = ["/dashboard", "/account"];
 const RATE_LIMIT_ROUTES = ["/api"];
 
+const EXCLUDED_ROUTES = [
+  "/_next/static",
+  "/_next/image",
+  "/favicon.ico",
+  "/api/auth",
+];
+
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico).*)",
-    "/((?!api/auth|api/key|api/user).*)",
+    "/((?!api/auth).*)",
   ],
 };
 
@@ -21,12 +28,12 @@ export default auth(async (req) => {
   const isAuthed = !!req.auth;
   const isTwoFactorAuthed = !!req.auth?.twoFactorAuthed;
 
-  if (RATE_LIMIT_ROUTES.some((route) => pathname.startsWith(route))) {
-    return await handleRateLimiting(req);
+  if (EXCLUDED_ROUTES.some((route) => pathname.startsWith(route))) {
+    return NextResponse.next();
   }
 
-  if (pathname.startsWith("/api/auth")) {
-    return NextResponse.next();
+  if (RATE_LIMIT_ROUTES.some((route) => pathname.startsWith(route))) {
+    return await handleRateLimiting(req);
   }
 
   if (pathname.startsWith("/api")) {
