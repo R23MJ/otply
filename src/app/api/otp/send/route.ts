@@ -26,6 +26,12 @@ export async function POST(req: Request) {
 
   const otp = await generateOTP(email);
 
+  if (process.env.NODE_ENV === "development") {
+    return new Response(JSON.stringify({ otp: otp }), {
+      status: 200,
+    });
+  }
+
   try {
     const { error } = await resend.emails.send({
       from: from_email,
