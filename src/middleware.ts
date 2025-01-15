@@ -37,7 +37,7 @@ export default auth(async (req) => {
   }
 
   if (pathname.startsWith("/api")) {
-    return validateApiKey(req);
+    return await validateApiKey(req);
   }
 
   const redirectResponse = redirectToPage(
