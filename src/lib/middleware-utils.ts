@@ -39,6 +39,12 @@ export const validateApiKey = async (req: Request) => {
   const otplyApiKey = authHeader.split(" ")[1];
   if (!otplyApiKey) return new Response("Unauthorized", { status: 401 });
 
+  if (
+    otplyApiKey === process.env.OTPLY_API_KEY &&
+    clientId === process.env.OTPLY_CLIENT_ID
+  )
+    return NextResponse.next(); // This is an internal call, we do not want to validate the key
+
   const keyIsValid = await fetch(`${process.env.OTPLY_KEY_VERIFY_URL}`, {
     method: "POST",
     headers: {
@@ -82,21 +88,27 @@ export const handleRateLimiting = async (req: Request) => {
   if (!clientId)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const response = await fetch(
-    `${process.env.OTPLY_URL}/api/user/?clientId=${clientId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.OTPLY_API_KEY}`,
-        "x-client-id": process.env.OTPLY_CLIENT_ID!,
-      },
-    }
-  );
-  if (!response.ok)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  let plan = "free";
 
-  const client = await response.json();
+  if (clientId !== process.env.OTPLY_CLIENT_ID) {
+    const response = await fetch(
+      `${process.env.OTPLY_URL}/api/user/?clientId=${clientId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OTPLY_API_KEY}`,
+          "x-client-id": process.env.OTPLY_CLIENT_ID!,
+        },
+      }
+    );
+    if (!response.ok)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const plan = client.plan || "free";
+    const client = await response.json();
+
+    plan = client.plan || "free";
+  } else {
+    plan = "pro";
+  }
 
   let ratelimiter;
   if (plan === "standard") ratelimiter = standardPlanLimiter;

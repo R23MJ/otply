@@ -33,12 +33,12 @@ export default auth(async (req) => {
     return NextResponse.next();
   }
 
-  if (RATE_LIMIT_ROUTES.some((route) => pathname.startsWith(route))) {
-    return await handleRateLimiting(req);
-  }
-
   if (pathname.startsWith("/api")) {
     return await validateApiKey(req);
+  }
+
+  if (RATE_LIMIT_ROUTES.some((route) => pathname.startsWith(route))) {
+    return await handleRateLimiting(req);
   }
 
   const redirectResponse = redirectToPage(
