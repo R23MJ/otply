@@ -6,7 +6,7 @@ import {
   validateApiKey,
 } from "./lib/middleware-utils";
 
-const PROTECTED_ROUTES = ["/dashboard"];
+const PROTECTED_ROUTES = ["/dashboard", "/account"];
 const RATE_LIMIT_ROUTES = ["/api"];
 
 export const config = {
@@ -21,19 +21,11 @@ export default auth(async (req) => {
   const isAuthed = !!req.auth;
   const isTwoFactorAuthed = !!req.auth?.twoFactorAuthed;
 
-  if (
-    pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/api/key") ||
-    pathname.startsWith("/api/user")
-  ) {
-    return NextResponse.next();
-  }
-
   if (RATE_LIMIT_ROUTES.some((route) => pathname.startsWith(route))) {
     return await handleRateLimiting(req);
   }
 
-  if (pathname.includes("/api/otp") || pathname.includes("/api/totp")) {
+  if (pathname.startsWith("/api")) {
     return validateApiKey(req);
   }
 
