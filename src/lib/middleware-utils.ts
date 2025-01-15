@@ -1,25 +1,31 @@
 import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
+import { PLAN_LIMITS } from "./constants";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL,
   token: process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
+// const timebasedLimiter = new Ratelimit({
+//   redis,
+//   limiter: Ratelimit.slidingWindow(10, "1m"),
+// });
+
 const freePlanLimiter = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(10, "30 d"),
+  limiter: Ratelimit.slidingWindow(PLAN_LIMITS.free.rateLimit, "30 d"),
 });
 
 const standardPlanLimiter = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(100, "30 d"),
+  limiter: Ratelimit.slidingWindow(PLAN_LIMITS.standard.rateLimit, "30 d"),
 });
 
 const proPlanLimiter = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(1000, "30 d"),
+  limiter: Ratelimit.slidingWindow(PLAN_LIMITS.pro.rateLimit, "30 d"),
 });
 
 export const validateApiKey = async (req: Request) => {
@@ -86,7 +92,7 @@ export const handleRateLimiting = async (req: Request) => {
   else ratelimiter = freePlanLimiter;
 
   const { success, limit, reset } = await ratelimiter.limit(
-    `ratelimit_${clientId}`
+    `ratelimit_${clientId}_${plan}`
   );
   if (!success) {
     return NextResponse.json(
