@@ -17,8 +17,6 @@ export async function getUser(username: string, password: string) {
     }
   );
 
-  console.log("res", res);
-
   if (!res.ok) {
     return null;
   }
