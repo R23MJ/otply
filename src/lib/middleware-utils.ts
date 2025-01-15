@@ -7,9 +7,19 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
-const ratelimiter = new Ratelimit({
+const freePlanLimiter = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(5, "30 m"),
+  limiter: Ratelimit.slidingWindow(10, "30 d"),
+});
+
+const standardPlanLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(100, "30 d"),
+});
+
+const proPlanLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(1000, "30 d"),
 });
 
 export const validateApiKey = async (req: Request) => {
@@ -65,6 +75,15 @@ export const handleRateLimiting = async (req: Request) => {
   );
   if (!response.ok)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const client = await response.json();
+
+  const plan = client.plan || "free";
+
+  let ratelimiter;
+  if (plan === "standard") ratelimiter = standardPlanLimiter;
+  else if (plan === "pro") ratelimiter = proPlanLimiter;
+  else ratelimiter = freePlanLimiter;
 
   const { success, limit, reset } = await ratelimiter.limit(
     `ratelimit_${clientId}`
