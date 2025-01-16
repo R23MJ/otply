@@ -11,7 +11,8 @@ export function RegistrationForm() {
   const [data, action, isPending] = useActionState(RegisterAction, null);
 
   useEffect(() => {
-    if (!data?.errors) return;
+    console.log(data);
+    if (!data.errors) return;
 
     Object.keys(data.errors).forEach((key) => {
       Object.values(data.errors[key]).forEach((error) => {
