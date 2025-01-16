@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
 import { PLAN_LIMITS } from "./constants";
+import { z } from "zod";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL,
@@ -28,20 +29,31 @@ const proPlanLimiter = new Ratelimit({
   limiter: Ratelimit.slidingWindow(PLAN_LIMITS.pro.rateLimit, "30 d"),
 });
 
+const AuthHeaderSchema = z.object({
+  clientId: z.string().cuid(),
+  authorization: z
+    .string()
+    .regex(/^Bearer (.+)$/)
+    .refine((val) => {
+      return val.split(" ")[1]?.length > 0;
+    })
+    .transform((val) => val.split(" ")[1]),
+});
+
 export const validateApiKey = async (req: Request) => {
   const authHeader = req.headers.get("Authorization");
   const clientId = req.headers.get("x-client-id");
 
-  if (!authHeader) return new Response("Unauthorized", { status: 401 });
+  const { data, error } = AuthHeaderSchema.safeParse({
+    clientId,
+    authorization: authHeader,
+  });
 
-  if (!clientId) return new Response("Unauthorized", { status: 401 });
-
-  const otplyApiKey = authHeader.split(" ")[1];
-  if (!otplyApiKey) return new Response("Unauthorized", { status: 401 });
+  if (error) return new Response("Unauthorized", { status: 401 });
 
   if (
-    otplyApiKey === process.env.OTPLY_API_KEY &&
-    clientId === process.env.OTPLY_CLIENT_ID
+    data.authorization === process.env.OTPLY_API_KEY &&
+    data.clientId === process.env.OTPLY_CLIENT_ID
   )
     return NextResponse.next(); // This is an internal call, we do not want to validate the key
 
@@ -52,7 +64,7 @@ export const validateApiKey = async (req: Request) => {
       Authorization: `Bearer ${process.env.OTPLY_API_KEY}`,
       "x-client-id": process.env.OTPLY_CLIENT_ID!,
     },
-    body: JSON.stringify({ clientId, key: otplyApiKey }),
+    body: JSON.stringify({ clientId: data.clientId, key: data.authorization }),
   });
 
   return keyIsValid
@@ -83,16 +95,22 @@ export const redirectToPage = (
   return null;
 };
 
+const ClientIdSchema = z.object({
+  clientId: z.string().cuid(),
+});
+
 export const handleRateLimiting = async (req: Request) => {
-  const clientId = req.headers.get("x-client-id");
-  if (!clientId)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { data, error } = ClientIdSchema.safeParse(
+    req.headers.get("x-client-id")
+  );
+
+  if (error) return new Response("Unauthorized", { status: 401 });
 
   let plan = "free";
 
-  if (clientId !== process.env.OTPLY_CLIENT_ID) {
+  if (data.clientId !== process.env.OTPLY_CLIENT_ID) {
     const response = await fetch(
-      `${process.env.OTPLY_URL}/api/user/?clientId=${clientId}`,
+      `${process.env.OTPLY_URL}/api/user/?clientId=${data.clientId}`,
       {
         headers: {
           Authorization: `Bearer ${process.env.OTPLY_API_KEY}`,
@@ -116,7 +134,7 @@ export const handleRateLimiting = async (req: Request) => {
   else ratelimiter = freePlanLimiter;
 
   const { success, limit, reset } = await ratelimiter.limit(
-    `ratelimit_${clientId}_${plan}`
+    `ratelimit_${data.clientId}_${plan}`
   );
   if (!success) {
     return NextResponse.json(

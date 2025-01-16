@@ -1,32 +1,33 @@
 "use server";
 
 import { signIn, signOut } from "@/auth";
-import bcrypt from "bcryptjs";
-import { prisma } from "./prisma-client-inst";
+import { RegisterSchema } from "./schemas";
+import { Register } from "./register";
 
-export async function RegisterAction(formData: FormData) {
-  const email = await formData.get("Username");
-  const password = await formData.get("Password");
+export async function RegisterAction(prevState: unknown, formData: FormData) {
+  const { data, error } = RegisterSchema.safeParse({
+    username: formData.get("username"),
+    password: formData.get("password"),
+  });
 
-  if (!email || !password) {
+  if (!data) {
+    return { errors: error.flatten().fieldErrors };
+  }
+
+  const res = await Register(data);
+
+  if (res.ok) {
+    await signIn("credentials", {
+      username: data.username,
+      password: data.password,
+      redirect: true,
+      redirectTo: "/dashboard",
+    });
+
     return;
   }
 
-  const hashedPassword = await bcrypt.hash(password as string, 10);
-
-  await prisma.user.create({
-    data: {
-      email: email as string,
-      password: hashedPassword,
-    },
-  });
-
-  await signIn("credentials", {
-    username: email as string,
-    password: password as string,
-    redirect: true,
-    redirectTo: "/dashboard",
-  });
+  return await res.json();
 }
 
 export async function GoogleSignIn() {

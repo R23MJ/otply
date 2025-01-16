@@ -1,25 +1,28 @@
 import { verifyOTP } from "@/lib/server-utils";
+import { z } from "zod";
 
-export const runtime = "nodejs";
+const RequestSchema = z.object({
+  otp: z
+    .string()
+    .trim()
+    .length(6)
+    .regex(/^\d{6}$/),
+  email: z.string().email(),
+});
 
 export async function POST(req: Request) {
-  const data = await req.json();
-  const { otp, email } = data;
+  const { data, error } = RequestSchema.safeParse(req.body);
 
-  if (!otp) {
-    console.log("OTP is required");
-    return new Response(JSON.stringify({ error: "OTP is required" }), {
-      status: 400,
-    });
+  if (error) {
+    return new Response(
+      JSON.stringify({ errors: error.flatten().fieldErrors }),
+      {
+        status: 400,
+      }
+    );
   }
 
-  if (!email) {
-    return new Response(JSON.stringify({ error: "Email is required" }), {
-      status: 400,
-    });
-  }
-
-  const isValid = await verifyOTP(otp, email);
+  const isValid = await verifyOTP(data.otp, data.email);
 
   if (!isValid) {
     console.log("Invalid OTP");
@@ -28,6 +31,5 @@ export async function POST(req: Request) {
     });
   }
 
-  console.log("OTP Verified");
   return new Response(JSON.stringify({ success: true }), { status: 200 });
 }

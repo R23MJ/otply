@@ -33,6 +33,7 @@ model User {
   id               String   @id @default(cuid())
   email            String   @unique
   password         String
+  emailVerified    Boolean  @default(false)
   twoFactorEnabled Boolean  @default(false)
   plan             PLAN     @default(FREE)
   apiKeys          APIKey[]

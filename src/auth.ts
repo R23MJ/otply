@@ -28,7 +28,6 @@ export async function getUser(username: string, password: string) {
     return null;
   }
 
-  console.log("user", user);
   return user;
 }
 
@@ -47,7 +46,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           credentials.password as string
         );
 
-        console.log(user);
         if (user) {
           return {
             id: user.id.toString(),

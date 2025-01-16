@@ -1,26 +1,39 @@
 import { prisma } from "@/lib/prisma-client-inst";
 import { NextRequest } from "next/server";
+import { z } from "zod";
+
+const RequestSchema = z
+  .object({
+    email: z.string().trim().email().optional(),
+    clientId: z.string().trim().cuid().optional(),
+  })
+  .refine(
+    (data) => {
+      return !!data.email || !!data.clientId;
+    },
+    {
+      message: "No search parameters provided",
+      path: ["email", "clientId"],
+    }
+  );
 
 export async function GET(req: NextRequest) {
-  const email = req.nextUrl.searchParams.get("email");
-  const clientId = req.nextUrl.searchParams.get("clientId");
+  const searchParams = Object.fromEntries(req.nextUrl.searchParams.entries());
+  const { data, error } = RequestSchema.safeParse(searchParams);
 
-  if (!email && !clientId) {
-    return new Response("Email or clientId is required", {
-      status: 400,
-    });
+  if (error) {
+    console.log(error);
+    return new Response(
+      JSON.stringify({ errors: error.flatten().fieldErrors }),
+      {
+        status: 400,
+      }
+    );
   }
 
-  let user;
-  if (email) {
-    user = await prisma.user.findUnique({
-      where: { email: email as string },
-    });
-  } else if (clientId) {
-    user = await prisma.user.findUnique({
-      where: { id: clientId as string },
-    });
-  }
+  const user = await prisma.user.findUnique({
+    where: data.email ? { email: data.email } : { id: data.clientId },
+  });
 
   if (!user) {
     return new Response("User not found", {

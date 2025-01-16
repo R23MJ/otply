@@ -1,27 +1,24 @@
 import { verifyAPIKey } from "@/lib/server-utils";
+import { z } from "zod";
 
-export const runtime = "nodejs";
+const RequestSchema = z.object({
+  clientId: z.string().trim().cuid(),
+  key: z.string().trim().startsWith("otply_"),
+});
 
 export async function POST(req: Request) {
-  const data = await req.json();
-  const { clientId, key } = data;
+  const { data, error } = RequestSchema.safeParse(req.json());
 
-  if (!clientId || !key) {
+  if (error) {
     return new Response(
-      JSON.stringify({ error: "Client ID and key are required" }),
+      JSON.stringify({ errors: error.flatten().fieldErrors }),
       {
         status: 400,
       }
     );
   }
 
-  if (!key.startsWith("otply_")) {
-    return new Response(JSON.stringify({ error: "Invalid API key" }), {
-      status: 401,
-    });
-  }
-
-  const keyIsValid = await verifyAPIKey(key, clientId);
+  const keyIsValid = await verifyAPIKey(data.key, data.clientId);
 
   if (!keyIsValid) {
     return new Response(JSON.stringify({ error: "Invalid API key" }), {
