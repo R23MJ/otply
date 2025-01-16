@@ -1,9 +1,9 @@
 import { Register } from "@/lib/register";
-import { RegisterSchema } from "@/lib/schemas";
+import { CredentialsSchema } from "@/lib/schemas/credentials";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const { data, error } = RegisterSchema.safeParse(req.json());
+  const { data, error } = CredentialsSchema.safeParse(req.json());
 
   if (!data) {
     return new Response(

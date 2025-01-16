@@ -1,13 +1,11 @@
+import { EmailSchema } from "@/lib/schemas/email";
+import { OtpSchema } from "@/lib/schemas/otp";
 import { verifyOTP } from "@/lib/server-utils";
 import { z } from "zod";
 
 const RequestSchema = z.object({
-  otp: z
-    .string()
-    .trim()
-    .length(6)
-    .regex(/^\d{6}$/),
-  email: z.string().email(),
+  otp: OtpSchema,
+  email: EmailSchema,
 });
 
 export async function POST(req: Request) {

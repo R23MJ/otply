@@ -1,11 +1,11 @@
 "use server";
 
 import { signIn, signOut } from "@/auth";
-import { RegisterSchema } from "./schemas";
+import { CredentialsSchema } from "./schemas/credentials";
 import { Register } from "./register";
 
 export async function RegisterAction(prevState: unknown, formData: FormData) {
-  const { data, error } = RegisterSchema.safeParse({
+  const { data, error } = CredentialsSchema.safeParse({
     username: formData.get("username"),
     password: formData.get("password"),
   });

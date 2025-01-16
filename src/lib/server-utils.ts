@@ -7,7 +7,7 @@ import { prisma } from "./prisma-client-inst";
 const SALT_ROUNDS = 10;
 const API_KEY_PREFIX = "otply_";
 
-function generateRandomInt(digits: number) {
+function generateTotp(digits: number) {
   const array = new Uint32Array(1);
   crypto.getRandomValues(array);
   return (array[0] % 1000000).toString().padStart(digits, "0");
@@ -22,7 +22,7 @@ function genKey(length = 32) {
 }
 
 export async function generateOTP(email: string) {
-  const otp = generateRandomInt(6);
+  const otp = generateTotp(6);
   const expiresAt = new Date(Date.now() + 1000 * 30);
 
   const hashedOtp = await bcrypt.hash(otp, SALT_ROUNDS);

@@ -1,11 +1,19 @@
+import Link from "next/link";
+import { Button } from "./ui/button";
+
 type OtpEmailTemplateProps = {
   otp: string;
+  url: string | null;
 };
 
-export default function OtpEmailTemplate({ otp }: OtpEmailTemplateProps) {
+export default function OtpEmailTemplate({ otp, url }: OtpEmailTemplateProps) {
   return (
     <div>
-      <h1>Your OTP is: {otp}</h1>
+      {url && (
+        <Button asChild>
+          <Link href={`${url}?otp=${otp}`}>Verify</Link>
+        </Button>
+      )}
     </div>
   );
 }

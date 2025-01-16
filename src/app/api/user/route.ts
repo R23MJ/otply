@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/prisma-client-inst";
+import { ClientIdSchema } from "@/lib/schemas/client-id";
+import { EmailSchema } from "@/lib/schemas/email";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
 const RequestSchema = z
   .object({
-    email: z.string().trim().email().optional(),
-    clientId: z.string().trim().cuid().optional(),
+    email: EmailSchema.optional(),
+    clientId: ClientIdSchema.optional(),
   })
   .refine(
     (data) => {

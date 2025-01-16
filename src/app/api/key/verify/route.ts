@@ -1,9 +1,11 @@
+import { ApiKeySchema } from "@/lib/schemas/api-key";
+import { ClientIdSchema } from "@/lib/schemas/client-id";
 import { verifyAPIKey } from "@/lib/server-utils";
 import { z } from "zod";
 
 const RequestSchema = z.object({
-  clientId: z.string().trim().cuid(),
-  key: z.string().trim().startsWith("otply_"),
+  clientId: ClientIdSchema,
+  key: ApiKeySchema,
 });
 
 export async function POST(req: Request) {

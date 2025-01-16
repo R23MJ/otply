@@ -1,12 +1,14 @@
+"use server";
+
 import { z } from "zod";
 import { prisma } from "./prisma-client-inst";
-import { RegisterSchema } from "./schemas";
 import bcrypt from "bcryptjs";
+import { CredentialsSchema } from "./schemas/credentials";
 
 export async function Register({
   username,
   password,
-}: z.infer<typeof RegisterSchema>) {
+}: z.infer<typeof CredentialsSchema>) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await prisma.user.findUnique({

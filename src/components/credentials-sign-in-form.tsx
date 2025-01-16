@@ -9,7 +9,7 @@ import {
   FormMessage,
 } from "./ui/form";
 import { useForm } from "react-hook-form";
-import { CredentialsSchema } from "@/lib/schemas";
+import { CredentialsSchema } from "@/lib/schemas/credentials";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "./ui/input";
