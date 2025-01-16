@@ -2,7 +2,7 @@
 
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { RegisterAction } from "@/lib/sign-in-actions";
 import { Label } from "./ui/label";
 import { toast } from "sonner";
@@ -10,14 +10,13 @@ import { toast } from "sonner";
 export function RegistrationForm() {
   const [data, action, isPending] = useActionState(RegisterAction, null);
 
-  if (data?.errors) {
-    console.log(data.errors);
+  useEffect(() => {
     Object.keys(data.errors).forEach((key) => {
       Object.values(data.errors[key]).forEach((error) => {
         toast.error(`${key}: ${error}`);
       });
     });
-  }
+  }, [data.errors]);
 
   return (
     <form className="w-full flex flex-col justify-center gap-2" action={action}>
