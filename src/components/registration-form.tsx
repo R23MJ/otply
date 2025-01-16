@@ -11,12 +11,14 @@ export function RegistrationForm() {
   const [data, action, isPending] = useActionState(RegisterAction, null);
 
   useEffect(() => {
+    if (!data?.errors) return;
+
     Object.keys(data.errors).forEach((key) => {
       Object.values(data.errors[key]).forEach((error) => {
         toast.error(`${key}: ${error}`);
       });
     });
-  }, [data.errors]);
+  }, [data]);
 
   return (
     <form className="w-full flex flex-col justify-center gap-2" action={action}>
