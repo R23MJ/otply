@@ -2,7 +2,7 @@
 
 import { signIn, signOut } from "@/auth";
 import { CredentialsSchema } from "./schemas/credentials";
-import { Register } from "./register";
+import { Register } from "./server-functions/register";
 
 export async function RegisterAction(prevState: unknown, formData: FormData) {
   const { data, error } = CredentialsSchema.safeParse({

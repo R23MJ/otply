@@ -1,6 +1,6 @@
 import { ApiKeySchema } from "@/lib/schemas/api-key";
 import { ClientIdSchema } from "@/lib/schemas/client-id";
-import { verifyAPIKey } from "@/lib/server-utils";
+import { verifyAPIKey } from "@/lib/server-functions/verify-api-key";
 import { z } from "zod";
 
 const RequestSchema = z.object({
@@ -20,15 +20,5 @@ export async function POST(req: Request) {
     );
   }
 
-  const keyIsValid = await verifyAPIKey(data.key, data.clientId);
-
-  if (!keyIsValid) {
-    return new Response(JSON.stringify({ error: "Invalid API key" }), {
-      status: 401,
-    });
-  }
-
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
-  });
+  return await verifyAPIKey(data.key, data.clientId);
 }

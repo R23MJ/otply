@@ -1,9 +1,10 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "./prisma-client-inst";
+import { prisma } from "../prisma-client-inst";
 import bcrypt from "bcryptjs";
-import { CredentialsSchema } from "./schemas/credentials";
+import { CredentialsSchema } from "../schemas/credentials";
+import { SendOtpEmail } from "./send-otp-email";
 
 export async function Register({
   username,
@@ -31,5 +32,6 @@ export async function Register({
     },
   });
 
+  await SendOtpEmail(newUser.email, process.env.EMAIL_VERIFICATION_URL);
   return new Response(JSON.stringify(newUser), { status: 201 });
 }

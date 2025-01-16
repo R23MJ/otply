@@ -1,4 +1,4 @@
-import { Register } from "@/lib/register";
+import { Register } from "@/lib/server-functions/register";
 import { CredentialsSchema } from "@/lib/schemas/credentials";
 import { NextRequest } from "next/server";
 
