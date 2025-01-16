@@ -21,15 +21,15 @@ export function CredentialsSignInForm() {
   const form = useForm<z.infer<typeof CredentialsSchema>>({
     resolver: zodResolver(CredentialsSchema),
     defaultValues: {
-      Username: "",
-      Password: "",
+      username: "",
+      password: "",
     },
   });
 
   const handleSubmit = form.handleSubmit(async (formData) => {
     const response = await signIn("credentials", {
-      username: formData.Username as string,
-      password: formData.Password as string,
+      username: formData.username as string,
+      password: formData.password as string,
       redirect: false,
     });
 
@@ -38,11 +38,11 @@ export function CredentialsSignInForm() {
     }
 
     if (response?.error) {
-      form.setError("Username", {
+      form.setError("username", {
         type: "manual",
         message: "Invalid credentials",
       });
-      form.setError("Password", {
+      form.setError("password", {
         type: "manual",
         message: "Invalid credentials",
       });
@@ -58,7 +58,7 @@ export function CredentialsSignInForm() {
         {Object.keys(CredentialsSchema.shape).map((key) => (
           <FormField
             control={form.control}
-            name={key as "Username" | "Password"}
+            name={key as "username" | "password"}
             key={key}
             render={({ field }) => (
               <FormItem>
@@ -66,7 +66,7 @@ export function CredentialsSignInForm() {
                 <FormControl>
                   <Input
                     placeholder={key}
-                    type={key === "Password" ? "password" : "text"}
+                    type={key === "password" ? "password" : "text"}
                     {...field}
                   />
                 </FormControl>
