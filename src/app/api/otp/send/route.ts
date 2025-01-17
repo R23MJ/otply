@@ -1,3 +1,4 @@
+import VerifyEmailTemplate from "@/components/email-templates/verify";
 import { SendRequestSchema } from "@/lib/schemas/send-request";
 import { SendOtpEmail } from "@/lib/server-functions/send-otp-email";
 
@@ -13,5 +14,5 @@ export async function POST(req: Request) {
     );
   }
 
-  return await SendOtpEmail(data.email, data.url);
+  return await SendOtpEmail(data.email, VerifyEmailTemplate, data.url);
 }

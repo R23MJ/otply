@@ -1,84 +1,57 @@
 "use client";
 
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "./ui/form";
-import { useForm } from "react-hook-form";
-import { CredentialsSchema } from "@/lib/schemas/credentials";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { signIn } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { useActionState, useEffect, useState } from "react";
+import { SignInAction } from "@/lib/sign-in-actions";
+import { Label } from "./ui/label";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
-export function CredentialsSignInForm() {
-  const form = useForm<z.infer<typeof CredentialsSchema>>({
-    resolver: zodResolver(CredentialsSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-    },
-  });
+export default function CredentialsSignInForm() {
+  const [formState, setFormState] = useState({ username: "", password: "" });
+  const [data, action, isPending] = useActionState(SignInAction, null);
+  const router = useRouter();
 
-  const handleSubmit = form.handleSubmit(async (formData) => {
-    const response = await signIn("credentials", {
-      username: formData.username as string,
-      password: formData.password as string,
-      redirect: false,
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState({ ...formState, [e.target.name]: e.target.value });
+  };
+
+  useEffect(() => {
+    if (data?.success) {
+      router.push("/dashboard");
+    }
+
+    if (!data?.errors) return;
+
+    Object.values(data.errors).forEach((error) => {
+      toast.error(`${error}`);
     });
-
-    if (response?.ok) {
-      redirect("/dashboard");
-    }
-
-    if (response?.error) {
-      form.setError("username", {
-        type: "manual",
-        message: "Invalid credentials",
-      });
-      form.setError("password", {
-        type: "manual",
-        message: "Invalid credentials",
-      });
-    }
-  });
+  }, [data, router]);
 
   return (
-    <Form {...form}>
-      <form
-        className="w-full flex flex-col justify-center gap-2"
-        onSubmit={handleSubmit}
-      >
-        {Object.keys(CredentialsSchema.shape).map((key) => (
-          <FormField
-            control={form.control}
-            name={key as "username" | "password"}
-            key={key}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{key}</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder={key}
-                    type={key === "password" ? "password" : "text"}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        ))}
-        <Button className="w-full" type="submit">
-          Sign In
-        </Button>
-      </form>
-    </Form>
+    <form className="w-full flex flex-col justify-center gap-2" action={action}>
+      <Label className="">Username</Label>
+      <Input
+        value={formState.username}
+        onChange={handleChange}
+        id="username"
+        name="username"
+        type="email"
+        required
+      />
+      <Label>Password</Label>
+      <Input
+        value={formState.password}
+        onChange={handleChange}
+        id="password"
+        name="password"
+        type="password"
+        required
+      />
+      <Button disabled={isPending} className="w-full" type="submit">
+        Sign In
+      </Button>
+    </form>
   );
 }

@@ -123,6 +123,12 @@ export const handleRateLimiting = async (req: Request) => {
 
     const client = await response.json();
 
+    if (!client)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    if (!client.emailVerified)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     plan = client.plan || "free";
   } else {
     plan = "pro";

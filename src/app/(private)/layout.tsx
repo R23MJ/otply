@@ -5,5 +5,11 @@ export default function ProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <SessionProvider>{children}</SessionProvider>;
+  return (
+    <SessionProvider>
+      <main className="flex flex-col items-center justify-center w-[60vw] h-[80vh] mx-auto">
+        {children}
+      </main>
+    </SessionProvider>
+  );
 }

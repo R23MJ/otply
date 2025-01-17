@@ -7,7 +7,7 @@ import { RegisterAction } from "@/lib/sign-in-actions";
 import { Label } from "./ui/label";
 import { toast } from "sonner";
 
-export function RegistrationForm() {
+export default function RegistrationForm() {
   const [formState, setFormState] = useState({ username: "", password: "" });
   const [data, action, isPending] = useActionState(RegisterAction, null);
 
@@ -20,7 +20,7 @@ export function RegistrationForm() {
 
     Object.keys(data.errors).forEach((key) => {
       Object.values(data.errors[key]).forEach((error) => {
-        toast.error(`${key}: ${error}`);
+        toast.error(`${error}`);
       });
     });
   }, [data]);

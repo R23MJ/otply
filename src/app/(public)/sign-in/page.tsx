@@ -1,4 +1,4 @@
-import { CredentialsSignInForm } from "@/components/credentials-sign-in-form";
+import CredentialsSignInForm from "@/components/credentials-sign-in-form";
 import GoogleSignInButton from "@/components/google-sign-in-button";
 
 export default function SignInPage() {

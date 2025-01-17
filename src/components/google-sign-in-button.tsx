@@ -5,9 +5,9 @@ import GoogleIcon from "./google-icon";
 export default function GoogleSignInButton() {
   return (
     <form className="w-full" action={GoogleSignIn}>
-      <Button className="w-full flex items-center google-sign-in" type="submit">
+      <Button className="w-full flex justify-start" type="submit">
         <GoogleIcon />
-        Continue with Google
+        <p className="flex-1">Continue with Google</p>
       </Button>
     </form>
   );
